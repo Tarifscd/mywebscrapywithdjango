@@ -17,22 +17,12 @@ class DataSaveView(APIView):
 
     # Handle POST requests
     def post(self, request):
-        print("here ============================= ")
-
-        # Define the path to the directory
-        # downloads_path = '/home/tarif/Downloads/'
         base_path = os.getcwd() + '/' +'srcap/management/commands/'
 
-        # Check if the directory exists
         if os.path.exists(base_path):
             print(f"Directory exists: {base_path}")
         else:
             print(f"Directory does not exist: {base_path}")
-
-
-        # List files in the directory
-        # files = os.listdir(downloads_path)
-        # print("Files in the directory:", files)
 
         directory = base_path
 
