@@ -8,11 +8,12 @@ from rest_framework import status
 import os
 
 from srcap.models import ScrapyData
+from srcap.serializers import ScrapyDataSerializer
 
 
 class DataSaveView(APIView):
-    # permission_classes = [IsAuthenticated]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [AllowAny]
 
     # Handle POST requests
     def post(self, request):
@@ -71,6 +72,28 @@ class DataSaveView(APIView):
 
         print("Data created successfully!")
 
-        book_data = request.data
-        # Normally, you would validate and save the data to the database
-        return Response({"message": "Book created!", "data": book_data}, status=status.HTTP_201_CREATED)
+        return Response({"message": "Data created!", "data": {}}, status=status.HTTP_201_CREATED)
+
+
+class DataUpdateView(APIView):
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
+
+    # Handle POST requests
+    def post(self, request):
+        serializer = ScrapyDataSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({"message": "Data not valid!", "data": {}}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer_data = serializer.data
+        print('serializer_data ================== ', serializer_data)
+        data_id = request.data['id']
+
+        try:
+            ScrapyData.objects.data_update(data_id, serializer_data)
+            return Response({"message": "Data updated sucessfully.", "data": {}}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            pass
+
+        return Response({"message": "Data not updated!", "data": {}}, status=status.HTTP_400_BAD_REQUEST)

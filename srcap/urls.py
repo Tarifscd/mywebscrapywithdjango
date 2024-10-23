@@ -2,5 +2,6 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    path('data/', DataSaveView.as_view(), name='home'),  # This maps the home view to the root URL of the app.
+    path('data/save/', DataSaveView.as_view(), name='home'),
+    path('data/update/', DataUpdateView.as_view(), name='home'),
 ]
