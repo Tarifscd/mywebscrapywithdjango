@@ -1,82 +1,79 @@
-from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated, AllowAny
-# myapp/views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
 import os
+import csv
+import shutil
 
 from srcap.models import ScrapyData
 from srcap.serializers import ScrapyDataSerializer
 
 
 class DataSaveView(APIView):
-    permission_classes = [IsAuthenticated]
-    # permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
-    # Handle POST requests
     def post(self, request):
-        base_path = os.getcwd() + '/' +'srcap/management/commands/'
-
-        if os.path.exists(base_path):
-            print(f"Directory exists: {base_path}")
-        else:
-            print(f"Directory does not exist: {base_path}")
-
-        directory = base_path
-
-        # List all folders in the directory
-        folders = [f for f in os.listdir(directory) if os.path.isdir(os.path.join(directory, f))]
-
-        print('folders ================== ', folders)
+        downloads_path = '/home/tarif/Downloads/'
         data_list = []
 
-        for dir in folders:
-            if str(dir) == '__pycache__':
-                continue
-            downloads_path_root = base_path + str(dir) + '/'
+        try:
+            with open('folder_path.csv', mode='r') as file:
+                reader = csv.reader(file)
+                for row in reader:
+                    if row[0] == 'path':
+                        continue
 
-            downloads_paths = [f for f in os.listdir(downloads_path_root) if os.path.isdir(os.path.join(downloads_path_root, f))]
+                    links_text = row[1]
+                    downloads_folder = os.path.expanduser('~/Downloads')
 
-            print('downloads_paths ==================== ', downloads_paths)
-            for downloads_path in downloads_paths:
-                if str(downloads_path) == '__pycache__':
-                    continue
+                    file_names = [f for f in os.listdir(downloads_path) if f.startswith(str(links_text))]
+                    saved_files = [f for f in os.listdir(row[0])]
+                    print('saved_files ======================= ', saved_files)
 
-                tsv_files = [f for f in os.listdir(downloads_path_root + downloads_path + '/')]
-                print("TSV files: ========================= ", tsv_files)
+                    for file_name in file_names:
+                        if file_name not in saved_files:
+                            print('file_name =================== ', file_name)
 
-                for f in tsv_files:
-                    fpath = downloads_path_root + downloads_path + '/' + str(f)
-                    print('fpath ========================= ', fpath)
+                            current_directory = row[0]
+                            print('current_directory ================ ', current_directory)
 
-                    data_obj = None
-                    data_obj = ScrapyData()
-                    data_obj.data_type = '.tsv'
-                    data_obj.path = fpath
-                    data_list.append(data_obj)
+                            source_file = os.path.join(downloads_folder, file_name)
+                            destination_file = os.path.join(current_directory, file_name)
 
-        print('data_list -============================ ', data_list)
-        ScrapyData.objects.bulk_create(data_list)
+                            shutil.move(source_file, destination_file)
 
-        print("Data created successfully!")
+                            fpath = current_directory + file_name
+                            print('fpath ========================= ', fpath)
 
-        return Response({"message": "Data created!", "data": {}}, status=status.HTTP_201_CREATED)
+                            data_obj = None
+                            data_obj = ScrapyData()
+                            data_obj.data_type = '.tsv'
+                            data_obj.path = fpath
+                            data_list.append(data_obj)
+
+
+            ScrapyData.objects.bulk_create(data_list)
+            print("Data created successfully!")
+            return Response({"message": "Data created!", "data": {}}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            print("Exception ================ ", e)
+        return Response({"message": "Data not created!", "data": {}}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DataUpdateView(APIView):
     # permission_classes = [IsAuthenticated]
     permission_classes = [AllowAny]
 
-    # Handle POST requests
     def post(self, request):
         serializer = ScrapyDataSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({"message": "Data not valid!", "data": {}}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer_data = serializer.data
-        print('serializer_data ================== ', serializer_data)
         data_id = request.data['id']
 
         try:
@@ -84,6 +81,6 @@ class DataUpdateView(APIView):
             return Response({"message": "Data updated sucessfully.", "data": {}}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            pass
+            print('serializer_data ================== ', serializer_data)
 
         return Response({"message": "Data not updated!", "data": {}}, status=status.HTTP_400_BAD_REQUEST)
