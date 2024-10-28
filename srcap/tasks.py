@@ -1,5 +1,4 @@
 from celery import shared_task
-from django.core.management.base import BaseCommand
 import time
 import os
 
@@ -14,8 +13,6 @@ import csv
 
 @shared_task
 def scrapping():
-    driver_path = '/usr/local/bin/chromedriver'
-
     chrome_options = Options()
 
     driver = webdriver.Chrome(options=chrome_options)
@@ -102,28 +99,40 @@ def scrapping():
 
             time.sleep(2)
 
-
-            element = driver.find_element(By.XPATH, "/html/body/div[1]/div/main/div[2]/div[1]/div/div[2]/div[1]/div[3]/div/div/div")
-            element.click()
+            element_root = driver.find_element(By.XPATH,
+                                               "/html/body/div[1]/div/main/div[2]/div[1]/div/div[2]/div[1]/div[3]/div/div/div")
+            element_root.click()
             time.sleep(2)
 
+            list_drop_down = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'strain']
+            for x in list_drop_down:
+                element = driver.find_element(By.CSS_SELECTOR, "[data-value="+str(x)+"]")
+                element.click()
+                time.sleep(2)
 
-            element = driver.find_element(By.CSS_SELECTOR, "[data-value='kingdom']")
-            element.click()
-            time.sleep(2)
+                buttons = driver.find_elements(By.TAG_NAME, 'button')
+                for button in buttons:
+                    print('button.text ========================= ', button.text)
+                    if button.text == 'EXPORT CURRENT RESULTS':
+                        print('button =============== ', button.text)
+                        button.click()
+                        break
 
-            buttons = driver.find_elements(By.TAG_NAME, 'button')
-            for button in buttons:
-                print('button.text ========================= ', button.text)
-                if button.text == 'EXPORT CURRENT RESULTS':
-                    print('button =============== ', button.text)
-                    button.click()
-                    break
+                time.sleep(1)
 
-            time.sleep(1)
+                if not x == list_drop_down[len(list_drop_down)-1]:
+                    element_root = driver.find_element(By.XPATH,
+                                                       "/html/body/div[1]/div/main/div[2]/div[1]/div/div[2]/div[1]/div[3]/div/div/div")
+                    element_root.click()
+                    time.sleep(2)
 
             driver.back()
             time.sleep(2)
 
     time.sleep(5)
     driver.quit()
+
+
+#shell_command
+# from srcap.tasks import scrapping
+# r = scrapping()
