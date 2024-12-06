@@ -10,6 +10,9 @@ import shutil
 from srcap.models import ScrapyData
 from srcap.serializers import ScrapyDataSerializer
 
+from django.core.cache import cache
+import logging
+logger = logging.getLogger(__name__)
 
 class DataSaveView(APIView):
     # permission_classes = [IsAuthenticated]
@@ -75,6 +78,40 @@ class DataUpdateView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        logger.debug("This is a debug message. =======================>>> ")
+        logger.exception("This is a exception message. =======================>>> ")
+        logger.info("This is an info message. =======================>>> ")
+        logger.warning("This is a warning message. =======================>>> ")
+        logger.error("This is an error message. =======================>>> ")
+        logger.critical("This is a critical message. =======================>>> ")
+
+
+        # Set a value in the cache
+        cache.set('my_key', 'my_value', timeout=60 * 10) # Cache for 10 minutes
+        cache.set('my_key2', {'my_value1': 1, 'my_value2': 2}, timeout=60 * 10)
+        cache.set('my_key3', ['list1', 2, 3.4, True], timeout=60 * 10)
+
+        # Get a value from the cache
+        value = cache.get('my_key')
+        print("value 1 ================================= ", value)  # Output: 'my_value'
+
+        value2 = cache.get('my_key2')
+        print("value 2 ================================= ", value2)
+
+        value3 = cache.get('my_key3')
+        print("value 3 ================================= ", value3)
+
+        # Delete a value from the cache
+        cache.delete('my_key')
+        cache.delete('my_key2')
+        cache.delete('my_key3')
+        value = cache.get('my_key')
+        print("value 4 ================================= ", value)
+        value2 = cache.get('my_key2')
+        print("value 5 ================================= ", value2)
+        value3 = cache.get('my_key3')
+        print("value 6 ================================= ", value3)
+
         serializer = ScrapyDataSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({"message": "Data not valid!", "data": {}}, status=status.HTTP_400_BAD_REQUEST)
